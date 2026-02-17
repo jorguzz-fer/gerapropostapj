@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
-import { 
-  Check, 
-  Clock, 
-  Stethoscope, 
-  FileText, 
-  HeartPulse, 
-  Building2, 
-  Users, 
-  TrendingDown, 
-  ShieldCheck, 
+import {
+  Check,
+  Clock,
+  Stethoscope,
+  FileText,
+  HeartPulse,
+  Building2,
+  Users,
+  TrendingDown,
+  ShieldCheck,
   Truck,
   ArrowRight,
   Phone,
@@ -21,6 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { propostaService } from "@/lib/propostaService";
+import { Loader2, FileDown, Send, Mail } from "lucide-react";
 
 // Assets
 import logo from "@assets/logo-fundo-transparente-para-fundo-branco_1771271483318.png";
@@ -46,10 +49,17 @@ export default function Proposal() {
   const [location, setLocation] = useLocation();
   const searchString = useSearch();
   const [data, setData] = useState({
-    companyName: "Logmam Transportes Ltda.", // Default
-    employees: 450, // Default
-    price: 19.90, // Default
+    companyName: "Logmam Transportes Ltda.",
+    employees: 450,
+    price: 19.90,
+    consultorNome: "",
+    consultorId: "",
+    clienteEmail: "",
+    clienteWhatsapp: "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [createdId, setCreatedId] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(searchString);
@@ -57,18 +67,99 @@ export default function Proposal() {
     const employees = params.get("employees");
     const price = params.get("price");
 
+    // New fields
+    const consultorNome = params.get("consultorNome") || "";
+    const consultorId = params.get("consultorId") || "";
+    const clienteEmail = params.get("clienteEmail") || "";
+    const clienteWhatsapp = params.get("clienteWhatsapp") || "";
+
     if (company && employees && price) {
       setData({
         companyName: company,
         employees: parseInt(employees),
         price: parseFloat(price),
+        consultorNome,
+        consultorId,
+        clienteEmail,
+        clienteWhatsapp,
       });
     }
   }, [searchString]);
 
+  const handleCreate = async () => {
+    if (createdId) return createdId;
+
+    try {
+      setLoading(true);
+      const res = await propostaService.create({
+        numeroProposta: `PROP-${Date.now()}`, // Temporary ID generation
+        titulo: `Proposta para ${data.companyName}`,
+        clienteNome: "A definir", // Will be updated if we have contact info
+        clienteEmpresa: data.companyName,
+        clienteEmail: data.clienteEmail,
+        clienteWhatsapp: data.clienteWhatsapp,
+        consultorId: data.consultorId || "N/A",
+        status: "RASCUNHO",
+        valorTotal: totalMonthly.toString(),
+        validadeDias: 30,
+        itens: [
+          { descricao: "Vidas", quantidade: data.employees, valorUnitario: data.price, valorTotal: totalMonthly }
+        ]
+      });
+      setCreatedId(res.id);
+      return res.id;
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao criar proposta.", variant: "destructive" });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async (method: "EMAIL" | "WHATSAPP" | "AMBOS") => {
+    let id = createdId;
+    if (!id) {
+      id = await handleCreate();
+      if (!id) return;
+    }
+
+    try {
+      setLoading(true);
+      await propostaService.enviar(id, method);
+      toast({ title: "Sucesso!", description: `Proposta enviada via ${method.toLowerCase()}.` });
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao enviar proposta.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePDF = async () => {
+    const { pdf } = await import("@react-pdf/renderer");
+    const { ProposalPDF } = await import("@/components/ProposalPDF");
+
+    const blob = await pdf(
+      <ProposalPDF
+        companyName={data.companyName}
+        employees={data.employees}
+        price={data.price}
+        consultorNome={data.consultorNome}
+        totalMonthly={totalMonthly}
+      />
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `proposta-${data.companyName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const totalMonthly = data.employees * data.price;
   const pricePerDay = (data.price / 30).toFixed(2);
-  
+
   const whatsappMessage = `Olá, gostaria de aprovar a proposta para a ${data.companyName}.`;
   const whatsappLink = `https://wa.me/5511970267810?text=${encodeURIComponent(whatsappMessage)}`;
 
@@ -78,22 +169,22 @@ export default function Proposal() {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/20">
-      
+
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <img src={logo} alt="WOW+ Logo" className="h-12 w-auto object-contain cursor-pointer" onClick={() => setLocation("/")} />
-          
+
           <div className="flex gap-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="hidden md:flex text-slate-500 hover:text-slate-900"
               onClick={() => setLocation("/")}
             >
               <Edit className="w-4 h-4 mr-2" />
               Nova Proposta
             </Button>
-            <Button 
+            <Button
               className="hidden md:flex bg-primary hover:bg-primary/90 text-white rounded-full"
               onClick={() => window.open(whatsappLink, '_blank')}
             >
@@ -107,15 +198,15 @@ export default function Proposal() {
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/40 z-10" />
-          <img 
-            src={heroImg} 
-            alt="Professional Background" 
+          <img
+            src={heroImg}
+            alt="Professional Background"
             className="w-full h-full object-cover object-center"
           />
         </div>
 
         <div className="container mx-auto px-4 relative z-20">
-          <motion.div 
+          <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeIn}
@@ -135,8 +226,8 @@ export default function Proposal() {
               Uma solução moderna de saúde digital para democratizar o acesso, reduzir custos e cuidar de quem move sua empresa.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 text-lg h-14 shadow-lg shadow-orange-500/20"
                 onClick={() => window.open(whatsappLink, '_blank')}
               >
@@ -154,7 +245,7 @@ export default function Proposal() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <motion.div 
+            <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -170,16 +261,16 @@ export default function Proposal() {
                 Nosso modelo foi desenvolvido para democratizar o acesso à saúde no Brasil, proporcionando atendimento 24 horas por dia, redução de custos empresariais e melhoria da qualidade de vida dos colaboradores.
               </p>
             </motion.div>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
               className="relative"
             >
-              <img 
-                src={stylizedImg} 
-                alt="WOW+ Stylized" 
+              <img
+                src={stylizedImg}
+                alt="WOW+ Stylized"
                 className="rounded-2xl shadow-2xl w-full max-w-md mx-auto"
               />
               <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-xl border border-slate-100 hidden md:block">
@@ -291,7 +382,7 @@ export default function Proposal() {
                 </div>
               </CardHeader>
               <CardContent>
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-2 md:grid-cols-4 gap-3"
                   variants={staggerContainer}
                   initial="hidden"
@@ -303,7 +394,7 @@ export default function Proposal() {
                     "Nutrição", "Endocrinologia", "Gastroenterologia", "Ginecologia",
                     "Geriatria", "Urologia", "Otorrinolaringologia", "Psiquiatria"
                   ].map((spec) => (
-                    <motion.div 
+                    <motion.div
                       key={spec}
                       variants={fadeIn}
                       className="px-3 py-2 bg-slate-50 rounded-lg text-sm text-slate-700 font-medium text-center border border-slate-100"
@@ -373,7 +464,7 @@ export default function Proposal() {
       {/* Pricing - The Highlight */}
       <section className="py-20 bg-orange-50/50">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
@@ -414,7 +505,7 @@ export default function Proposal() {
                     </span>
                   </div>
                   <p className="text-slate-400 text-sm mt-2 relative z-10">/ mês</p>
-                  <Button 
+                  <Button
                     className="mt-8 w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-lg relative z-10"
                     onClick={() => window.open(whatsappLink, '_blank')}
                   >
@@ -487,7 +578,7 @@ export default function Proposal() {
           <div className="relative">
             {/* Line connecting steps */}
             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2 hidden md:block" />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
               {[
                 { step: "01", title: "Aprovação", desc: "Da proposta comercial" },
@@ -506,6 +597,83 @@ export default function Proposal() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Admin Actions */}
+      <section className="py-12 bg-slate-100 border-t border-slate-200">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-4xl mx-auto border-none shadow-xl bg-white overflow-hidden">
+            <CardHeader className="bg-slate-900 text-white p-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-green-400" />
+                  Área do Consultor
+                </CardTitle>
+                <div className="flex gap-2 text-xs text-slate-400">
+                  <span>ID: {data.consultorId || "---"}</span>
+                  <span>|</span>
+                  <span>Consultor: {data.consultorNome || "---"}</span>
+                </div>
+              </div>
+              <CardDescription className="text-slate-400">
+                Gerencie o envio e exportação desta proposta para o cliente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    Enviar Proposta
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleSend("EMAIL")}
+                      disabled={loading || !data.clienteEmail}
+                      className="border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleSend("WHATSAPP")}
+                      disabled={loading || !data.clienteWhatsapp}
+                      className="border-slate-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      WhatsApp
+                    </Button>
+                  </div>
+                  <Button
+                    className="w-full bg-slate-900 hover:bg-slate-800"
+                    onClick={() => handleSend("AMBOS")}
+                    disabled={loading || (!data.clienteEmail && !data.clienteWhatsapp)}
+                  >
+                    Enviar para Ambos
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                    <FileDown className="w-4 h-4" />
+                    Exportar
+                  </h4>
+                  <Button
+                    variant="secondary"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200"
+                    onClick={handlePDF}
+                    disabled={loading}
+                  >
+                    <FileDown className="w-8 h-8 text-slate-500" />
+                    <span>Baixar PDF da Proposta</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 

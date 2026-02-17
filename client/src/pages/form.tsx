@@ -15,6 +15,10 @@ const formSchema = z.object({
   companyName: z.string().min(2, "Nome da empresa é obrigatório"),
   employees: z.coerce.number().min(1, "Mínimo de 1 colaborador"),
   price: z.coerce.number().min(0.01, "Valor deve ser maior que zero"),
+  consultorNome: z.string().min(2, "Nome do consultor é obrigatório"),
+  consultorId: z.string().min(1, "ID do consultor é obrigatório"),
+  clienteEmail: z.string().email("Email inválido").optional().or(z.literal("")),
+  clienteWhatsapp: z.string().optional(),
   logoUrl: z.string().optional(),
 });
 
@@ -27,6 +31,10 @@ export default function ConsultantForm() {
       companyName: "",
       employees: 0,
       price: 19.90,
+      consultorNome: "",
+      consultorId: "",
+      clienteEmail: "",
+      clienteWhatsapp: "",
       logoUrl: "",
     },
   });
@@ -37,6 +45,10 @@ export default function ConsultantForm() {
     params.append("company", values.companyName);
     params.append("employees", values.employees.toString());
     params.append("price", values.price.toString());
+    params.append("consultorNome", values.consultorNome);
+    params.append("consultorId", values.consultorId);
+    if (values.clienteEmail) params.append("clienteEmail", values.clienteEmail);
+    if (values.clienteWhatsapp) params.append("clienteWhatsapp", values.clienteWhatsapp);
     if (values.logoUrl) params.append("logo", values.logoUrl);
 
     setLocation(`/proposta?${params.toString()}`);
@@ -58,7 +70,7 @@ export default function ConsultantForm() {
         <CardContent className="p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
+
               <FormField
                 control={form.control}
                 name="companyName"
@@ -110,6 +122,98 @@ export default function ConsultantForm() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Consultant Fields */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Dados do Consultor
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="consultorNome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-slate-500" />
+                          Nome do Consultor
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: João Silva" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="consultorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-slate-500" />
+                          ID do Consultor
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: CONS001" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Client Fields */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Dados do Cliente (Opcional)
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="clienteEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-slate-500" />
+                          Email do Cliente
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="cliente@empresa.com" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clienteWhatsapp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-slate-500" />
+                          WhatsApp do Cliente
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="(11) 99999-9999" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <Separator className="my-4" />
