@@ -1,0 +1,247 @@
+import {
+    type User, type InsertUser,
+    type Consultor, type InsertConsultor,
+    type Proposta, type InsertProposta,
+    type PropostaEnvio, type InsertPropostaEnvio,
+    type MetaProposta, type InsertMetaProposta,
+    type PropostaItem,
+    users, consultores, propostas, propostaEnvios, metasPropostas
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { type IStorage, type PropostaFilters, type DashboardMetrics } from "./storage";
+
+export class PostgresStorage implements IStorage {
+    // Users
+    async getUser(id: string): Promise<User | undefined> {
+        const [user] = await db.select().from(users).where(eq(users.id, id));
+        return user;
+    }
+
+    async getUserByUsername(username: string): Promise<User | undefined> {
+        const [user] = await db.select().from(users).where(eq(users.username, username));
+        return user;
+    }
+
+    async createUser(user: InsertUser): Promise<User> {
+        const [newUser] = await db.insert(users).values(user).returning();
+        return newUser;
+    }
+
+    // Consultores
+    async getConsultores(): Promise<Consultor[]> {
+        return await db.select().from(consultores).orderBy(desc(consultores.createdAt));
+    }
+
+    async getConsultor(id: string): Promise<Consultor | undefined> {
+        const [consultor] = await db.select().from(consultores).where(eq(consultores.id, id));
+        return consultor;
+    }
+
+    async createConsultor(data: InsertConsultor): Promise<Consultor> {
+        const [newConsultor] = await db.insert(consultores).values(data).returning();
+        return newConsultor;
+    }
+
+    async updateConsultor(id: string, data: Partial<InsertConsultor>): Promise<Consultor | undefined> {
+        const [updated] = await db
+            .update(consultores)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(consultores.id, id))
+            .returning();
+        return updated;
+    }
+
+    async deleteConsultor(id: string): Promise<boolean> {
+        const [deleted] = await db.delete(consultores).where(eq(consultores.id, id)).returning();
+        return !!deleted;
+    }
+
+    // Propostas
+    async getPropostas(filters?: PropostaFilters): Promise<Proposta[]> {
+        const conditions = [];
+        if (filters?.status) conditions.push(eq(propostas.status, filters.status as any));
+        if (filters?.estado) conditions.push(eq(propostas.clienteEstado, filters.estado));
+        if (filters?.consultorId) conditions.push(eq(propostas.consultorId, filters.consultorId));
+
+        // Note: Drizzle's 'and' expects at least one argument, so we need to handle empty array
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+        return await db.select().from(propostas).where(whereClause).orderBy(desc(propostas.createdAt));
+    }
+
+    async getProposta(id: string): Promise<Proposta | undefined> {
+        const [proposta] = await db.select().from(propostas).where(eq(propostas.id, id));
+        return proposta;
+    }
+
+    async getNextNumeroProposta(): Promise<string> {
+        const year = new Date().getFullYear();
+        // Simplified counter logic for now - in production ideally use a sequence or count
+        const countResult = await db.select({ count: sql<number>`count(*)` }).from(propostas);
+        const count = Number(countResult[0]?.count || 0) + 1;
+        return `PRP-${year}-${String(count).padStart(4, "0")}`;
+    }
+
+    async createProposta(data: InsertProposta): Promise<Proposta> {
+        const numeroProposta = await this.getNextNumeroProposta();
+        const [newProposta] = await db.insert(propostas).values({
+            ...data,
+            numeroProposta,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }).returning();
+        return newProposta;
+    }
+
+    async updateProposta(id: string, data: Partial<InsertProposta>): Promise<Proposta | undefined> {
+        const [updated] = await db
+            .update(propostas)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(propostas.id, id))
+            .returning();
+        return updated;
+    }
+
+    async deleteProposta(id: string): Promise<boolean> {
+        const [deleted] = await db.delete(propostas).where(eq(propostas.id, id)).returning();
+        return !!deleted;
+    }
+
+    // Envios
+    async getEnviosByProposta(propostaId: string): Promise<PropostaEnvio[]> {
+        return await db.select().from(propostaEnvios).where(eq(propostaEnvios.propostaId, propostaId));
+    }
+
+    async createEnvio(data: InsertPropostaEnvio): Promise<PropostaEnvio> {
+        const [novoEnvio] = await db.insert(propostaEnvios).values({
+            ...data,
+            createdAt: new Date()
+        }).returning();
+        return novoEnvio;
+    }
+
+    // Metas
+    async getMetas(): Promise<MetaProposta[]> {
+        return await db.select().from(metasPropostas).orderBy(desc(metasPropostas.createdAt));
+    }
+
+    async getMeta(id: string): Promise<MetaProposta | undefined> {
+        const [meta] = await db.select().from(metasPropostas).where(eq(metasPropostas.id, id));
+        return meta;
+    }
+
+    async createMeta(data: InsertMetaProposta): Promise<MetaProposta> {
+        const [novaMeta] = await db.insert(metasPropostas).values(data).returning();
+        return novaMeta;
+    }
+
+    async updateMeta(id: string, data: Partial<InsertMetaProposta>): Promise<MetaProposta | undefined> {
+        const [updated] = await db
+            .update(metasPropostas)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(metasPropostas.id, id))
+            .returning();
+        return updated;
+    }
+
+    async deleteMeta(id: string): Promise<boolean> {
+        const [deleted] = await db.delete(metasPropostas).where(eq(metasPropostas.id, id)).returning();
+        return !!deleted;
+    }
+
+    // Dashboard
+    async getDashboardMetrics(): Promise<DashboardMetrics> {
+        const allPropostas = await db.select().from(propostas);
+        const enviadas = allPropostas.filter(p => p.status !== "RASCUNHO");
+        const aceitas = allPropostas.filter(p => p.status === "ACEITA");
+
+        const totalEnviadas = enviadas.length;
+        const totalAceitas = aceitas.length;
+        const valorTotalAceito = aceitas.reduce((sum, p) => sum + parseFloat(p.valorTotal || "0"), 0);
+        const taxaConversao = totalEnviadas > 0 ? (totalAceitas / totalEnviadas) * 100 : 0;
+
+        // Helper maps (similar logic to MemStorage but processing fetched data)
+        // For optimization in future: Use SQL GROUP BY aggregation
+
+        // Por estado
+        const estadoMap = new Map<string, { count: number; aceitas: number }>();
+        enviadas.forEach(p => {
+            const estado = p.clienteEstado || "N/A";
+            const curr = estadoMap.get(estado) || { count: 0, aceitas: 0 };
+            curr.count++;
+            if (p.status === "ACEITA") curr.aceitas++;
+            estadoMap.set(estado, curr);
+        });
+        const propostasPorEstado = Array.from(estadoMap.entries()).map(([estado, data]) => ({ estado, ...data }));
+
+        // Por mês
+        const mesMap = new Map<string, { enviadas: number; aceitas: number }>();
+        allPropostas.forEach(p => {
+            const mes = new Date(p.createdAt).toISOString().slice(0, 7);
+            const curr = mesMap.get(mes) || { enviadas: 0, aceitas: 0 };
+            if (p.status !== "RASCUNHO") curr.enviadas++;
+            if (p.status === "ACEITA") curr.aceitas++;
+            mesMap.set(mes, curr);
+        });
+        const propostasPorMes = Array.from(mesMap.entries())
+            .map(([mes, data]) => ({ mes, ...data }))
+            .sort((a, b) => a.mes.localeCompare(b.mes));
+
+        // Por status
+        const statusMap = new Map<string, number>();
+        allPropostas.forEach(p => {
+            statusMap.set(p.status, (statusMap.get(p.status) || 0) + 1);
+        });
+        const propostasPorStatus = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count }));
+
+        // Top Consultores
+        const allConsultores = await this.getConsultores();
+        const consultorMap = new Map<string, { nome: string; aceitas: number; total: number }>();
+        enviadas.forEach(p => {
+            if (p.consultorId) {
+                const consultor = allConsultores.find(c => c.id === p.consultorId);
+                const nome = consultor?.nome || "Desconhecido";
+                const curr = consultorMap.get(p.consultorId) || { nome, aceitas: 0, total: 0 };
+                curr.total++;
+                if (p.status === "ACEITA") curr.aceitas++;
+                consultorMap.set(p.consultorId, curr);
+            }
+        });
+        const topConsultores = Array.from(consultorMap.values())
+            .sort((a, b) => b.aceitas - a.aceitas)
+            .slice(0, 10);
+
+        // Valor Acumulado
+        const valorMesMap = new Map<string, number>();
+        aceitas.forEach(p => {
+            const mes = new Date(p.createdAt).toISOString().slice(0, 7);
+            valorMesMap.set(mes, (valorMesMap.get(mes) || 0) + parseFloat(p.valorTotal || "0"));
+        });
+        let acumulado = 0;
+        const valorAcumuladoPorMes = Array.from(valorMesMap.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([mes, valor]) => {
+                acumulado += valor;
+                return { mes, valor: acumulado };
+            });
+
+        // Recentes
+        const propostasRecentes = allPropostas
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 10);
+
+        return {
+            totalEnviadas,
+            totalAceitas,
+            valorTotalAceito,
+            taxaConversao,
+            propostasPorEstado,
+            propostasPorMes,
+            propostasPorStatus,
+            topConsultores,
+            valorAcumuladoPorMes,
+            propostasRecentes,
+        };
+    }
+}
