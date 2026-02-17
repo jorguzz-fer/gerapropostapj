@@ -26,9 +26,9 @@ import { propostaService } from "@/lib/propostaService";
 import { Loader2, FileDown, Send, Mail } from "lucide-react";
 
 // Assets
-import logo from "@assets/logo-fundo-transparente-para-fundo-branco_1771271483318.png";
-import heroImg from "@assets/jovem-e-bem-sucedida-programadora-retrato-de-engenheira-com-co_1771271556623.jpg";
-import stylizedImg from "@assets/1_1771278907203.jpg";
+import logo from "@assets/logo.png";
+import heroImg from "@assets/hero.jpg";
+import stylizedImg from "@assets/detail.jpg";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
