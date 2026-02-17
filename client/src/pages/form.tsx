@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Users, Building2, DollarSign, ArrowRight, FileText } from "lucide-react";
+import { Users, User, Building2, DollarSign, ArrowRight, FileText, Mail, Phone } from "lucide-react";
 
 // Schema for validation
 const formSchema = z.object({

@@ -59,7 +59,8 @@ export default function Proposal() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [createdId, setCreatedId] = useState<number | null>(null);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(searchString);
