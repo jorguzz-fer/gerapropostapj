@@ -51,9 +51,22 @@ export default function PropostasDashboard() {
   const [, setLocation] = useLocation();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    propostaService.dashboard().then(setMetrics).catch(() => { }).finally(() => setLoading(false));
+    propostaService.dashboard()
+      .then(setMetrics)
+      .catch((err: any) => {
+        let msg = "Erro ao carregar dashboard.";
+        try {
+          const raw = err?.message || "";
+          const jsonPart = raw.replace(/^\d+:\s*/, "");
+          const parsed = JSON.parse(jsonPart);
+          msg = parsed.message || msg;
+        } catch {}
+        setFetchError(msg);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const formatCurrency = (val: number) =>
@@ -71,11 +84,23 @@ export default function PropostasDashboard() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-500 mb-4">Nenhum dado disponível ainda.</p>
-          <Button onClick={() => setLocation("/admin/propostas/nova")} className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Criar Primeira Proposta
-          </Button>
+          {fetchError ? (
+            <>
+              <p className="text-red-500 font-medium mb-2">Erro ao carregar dashboard</p>
+              <p className="text-slate-400 text-sm mb-4">{fetchError}</p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Tentar novamente
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-slate-500 mb-4">Nenhum dado disponível ainda.</p>
+              <Button onClick={() => setLocation("/admin/propostas/nova")} className="bg-primary hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" />
+                Criar Primeira Proposta
+              </Button>
+            </>
+          )}
         </div>
       </div>
     );

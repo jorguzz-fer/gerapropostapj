@@ -59,8 +59,15 @@ export default function AdminConsultores() {
       setDialogOpen(false);
       resetForm();
       load();
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível salvar.", variant: "destructive" });
+    } catch (error: any) {
+      let description = "Não foi possível salvar.";
+      try {
+        const raw = error?.message || "";
+        const jsonPart = raw.replace(/^\d+:\s*/, "");
+        const parsed = JSON.parse(jsonPart);
+        description = parsed.message || description;
+      } catch {}
+      toast({ title: "Erro ao salvar consultor", description, variant: "destructive" });
     }
   };
 

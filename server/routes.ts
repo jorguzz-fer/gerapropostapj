@@ -41,8 +41,17 @@ export async function registerRoutes(
   app.post("/api/consultores", async (req, res) => {
     const parsed = createConsultorSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
-    const consultor = await storage.createConsultor(parsed.data as any);
-    res.status(201).json(consultor);
+    try {
+      const consultor = await storage.createConsultor(parsed.data as any);
+      res.status(201).json(consultor);
+    } catch (error: any) {
+      const isUniqueViolation = error?.code === "23505" || error?.message?.includes("unique");
+      if (isUniqueViolation) {
+        return res.status(409).json({ message: "Já existe um consultor com este email." });
+      }
+      console.error("Erro ao criar consultor:", error);
+      res.status(500).json({ message: error?.message || "Erro ao salvar consultor." });
+    }
   });
 
   app.put("/api/consultores/:id", async (req, res) => {
