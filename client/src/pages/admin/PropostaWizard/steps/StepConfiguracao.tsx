@@ -24,7 +24,7 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
   const [consultores, setConsultores] = useState<any[]>([]);
 
   useEffect(() => {
-    propostaService.listConsultores().then(setConsultores).catch(() => {});
+    propostaService.listConsultores().then(setConsultores).catch(() => { });
   }, []);
 
   const handleConsultorSelect = (id: string) => {
@@ -33,7 +33,9 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
       onChange({
         consultorId: consultor.id,
         consultorNome: consultor.nome,
-        consultorIdCodigo: consultor.idConsultor,
+        // consultorIdCodigo: consultor.idConsultor, // Legacy
+        consultorEmail: consultor.email,
+        consultorTelefone: consultor.telefone || consultor.whatsapp,
       });
     }
   };
@@ -71,7 +73,7 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
           ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="md:col-span-2">
               <Label className="flex items-center gap-2">
                 <User className="w-4 h-4 text-slate-500" />
                 Nome do Consultor
@@ -84,11 +86,21 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
               />
             </div>
             <div>
-              <Label className="flex items-center gap-2">ID do Consultor</Label>
+              <Label className="flex items-center gap-2">Email do Consultor</Label>
               <Input
-                placeholder="Ex: CONS-001"
-                value={data.consultorIdCodigo}
-                onChange={(e) => onChange({ consultorIdCodigo: e.target.value })}
+                type="email"
+                placeholder="consultor@wowmais.com.br"
+                value={data.consultorEmail}
+                onChange={(e) => onChange({ consultorEmail: e.target.value })}
+                className="h-12 bg-slate-50"
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">Telefone/WhatsApp</Label>
+              <Input
+                placeholder="(11) 99999-9999"
+                value={data.consultorTelefone}
+                onChange={(e) => onChange({ consultorTelefone: e.target.value })}
                 className="h-12 bg-slate-50"
               />
             </div>

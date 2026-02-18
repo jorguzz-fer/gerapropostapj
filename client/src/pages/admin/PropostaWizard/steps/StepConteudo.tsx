@@ -3,8 +3,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Plus, Trash2, FileText, DollarSign } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, ArrowRight, Plus, Trash2, FileText, DollarSign, Calendar } from "lucide-react";
 import type { PropostaFormData, PropostaItemForm } from "../index";
+
+const ITEM_OPTIONS = [
+  "Plano Individual PJ",
+  "Plano Família PJ",
+  "Odonto individual PJ",
+  "Odonto familia PJ"
+];
 
 interface Props {
   data: PropostaFormData;
@@ -14,6 +22,11 @@ interface Props {
 }
 
 export default function StepConteudo({ data, onChange, onBack, onNext }: Props) {
+  // Set default title if empty
+  if (!data.titulo) {
+    setTimeout(() => onChange({ titulo: "Proposta Comercial - Plano Pessoa Jurídica" }), 0);
+  }
+
   const updateItem = (index: number, field: keyof PropostaItemForm, value: string | number) => {
     const newItens = [...data.itens];
     (newItens[index] as any)[field] = value;
@@ -57,7 +70,7 @@ export default function StepConteudo({ data, onChange, onBack, onNext }: Props) 
           <div>
             <Label>Título da Proposta *</Label>
             <Input
-              placeholder="Ex: Proposta Comercial - Plano Saúde Empresarial"
+              placeholder="Proposta Comercial - Plano Pessoa Jurídica"
               value={data.titulo}
               onChange={(e) => onChange({ titulo: e.target.value })}
               className="h-12 bg-slate-50"
@@ -74,13 +87,22 @@ export default function StepConteudo({ data, onChange, onBack, onNext }: Props) 
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Validade (dias)</Label>
-              <Input
-                type="number"
-                value={data.validadeDias}
-                onChange={(e) => onChange({ validadeDias: parseInt(e.target.value) || 30 })}
-                className="h-12 bg-slate-50"
-              />
+              <Label className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-500" />
+                Validade (Meses)
+              </Label>
+              <Select
+                value={data.validadeDias === 365 ? "12" : "6"}
+                onValueChange={(v) => onChange({ validadeDias: v === "12" ? 365 : 180 })}
+              >
+                <SelectTrigger className="h-12 bg-slate-50">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6 Meses</SelectItem>
+                  <SelectItem value="12">12 Meses</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Observações</Label>
@@ -120,12 +142,19 @@ export default function StepConteudo({ data, onChange, onBack, onNext }: Props) 
               <div className="flex-1 space-y-3">
                 <div>
                   <Label className="text-xs text-slate-500">Descrição</Label>
-                  <Input
-                    placeholder="Descrição do item/serviço"
+                  <Select
                     value={item.descricao}
-                    onChange={(e) => updateItem(index, "descricao", e.target.value)}
-                    className="h-10 bg-white"
-                  />
+                    onValueChange={(v) => updateItem(index, "descricao", v)}
+                  >
+                    <SelectTrigger className="h-10 bg-white">
+                      <SelectValue placeholder="Selecione o plano..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ITEM_OPTIONS.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>

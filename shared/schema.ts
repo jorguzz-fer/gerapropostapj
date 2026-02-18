@@ -36,9 +36,9 @@ export const users = pgTable("users", {
 export const consultores = pgTable("consultores", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   nome: text("nome").notNull(),
-  idConsultor: text("id_consultor").notNull().unique(),
-  email: text("email"),
-  whatsapp: text("whatsapp"),
+  email: text("email").notNull().unique(), // Chave para relatórios
+  telefone: text("telefone"),
+  idConsultor: text("id_consultor"), // Mantido por compatibilidade, mas o email será a chave principal
   ativo: boolean("ativo").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -174,9 +174,9 @@ export const enviarPropostaSchema = z.object({
 
 export const createConsultorSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  idConsultor: z.string().min(1, "ID do consultor é obrigatório"),
-  email: z.string().email().optional().or(z.literal("")),
-  whatsapp: z.string().optional(),
+  email: z.string().email("Email inválido"), // Obrigatório
+  telefone: z.string().optional(),
+  idConsultor: z.string().optional(), // Opcional
   ativo: z.boolean().default(true),
 });
 

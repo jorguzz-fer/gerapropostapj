@@ -16,7 +16,8 @@ const formSchema = z.object({
   employees: z.coerce.number().min(1, "Mínimo de 1 colaborador"),
   price: z.coerce.number().min(0.01, "Valor deve ser maior que zero"),
   consultorNome: z.string().min(2, "Nome do consultor é obrigatório"),
-  consultorId: z.string().min(1, "ID do consultor é obrigatório"),
+  consultorEmail: z.string().email("Email inválido"), // New field
+  consultorTelefone: z.string().optional(), // New field
   clienteEmail: z.string().email("Email inválido").optional().or(z.literal("")),
   clienteWhatsapp: z.string().optional(),
   logoUrl: z.string().optional(),
@@ -32,7 +33,8 @@ export default function ConsultantForm() {
       employees: 0,
       price: 19.90,
       consultorNome: "",
-      consultorId: "",
+      consultorEmail: "",
+      consultorTelefone: "",
       clienteEmail: "",
       clienteWhatsapp: "",
       logoUrl: "",
@@ -46,7 +48,8 @@ export default function ConsultantForm() {
     params.append("employees", values.employees.toString());
     params.append("price", values.price.toString());
     params.append("consultorNome", values.consultorNome);
-    params.append("consultorId", values.consultorId);
+    params.append("consultorEmail", values.consultorEmail);
+    if (values.consultorTelefone) params.append("consultorTelefone", values.consultorTelefone);
     if (values.clienteEmail) params.append("clienteEmail", values.clienteEmail);
     if (values.clienteWhatsapp) params.append("clienteWhatsapp", values.clienteWhatsapp);
     if (values.logoUrl) params.append("logo", values.logoUrl);
@@ -133,18 +136,35 @@ export default function ConsultantForm() {
                   Dados do Consultor
                 </h3>
 
+                <FormField
+                  control={form.control}
+                  name="consultorNome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-slate-500" />
+                        Nome do Consultor
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: João Silva" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="consultorNome"
+                    name="consultorEmail"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-slate-500" />
-                          Nome do Consultor
+                          <Mail className="w-4 h-4 text-slate-500" />
+                          Email do Consultor
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: João Silva" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                          <Input type="email" placeholder="consultor@wowmais.com.br" {...field} className="h-12 bg-slate-50 border-slate-200" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -153,15 +173,15 @@ export default function ConsultantForm() {
 
                   <FormField
                     control={form.control}
-                    name="consultorId"
+                    name="consultorTelefone"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-slate-500" />
-                          ID do Consultor
+                          <Phone className="w-4 h-4 text-slate-500" />
+                          Telefone/WhatsApp
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: CONS001" {...field} className="h-12 bg-slate-50 border-slate-200" />
+                          <Input placeholder="(11) 99999-9999" {...field} className="h-12 bg-slate-50 border-slate-200" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

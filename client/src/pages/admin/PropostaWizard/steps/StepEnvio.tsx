@@ -12,6 +12,7 @@ import {
   Save,
   CheckCircle,
   Loader2,
+  FileText,
 } from "lucide-react";
 import type { PropostaFormData } from "../index";
 import { propostaService } from "@/lib/propostaService";
@@ -242,6 +243,21 @@ export default function StepEnvio({ data, propostaId, setPropostaId, onBack }: P
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
               <span className="text-xs">Gerar PDF</span>
             </Button>
+
+            <Button
+              onClick={() => {
+                const printWindow = window.open("", "_blank");
+                if (printWindow) {
+                  printWindow.document.write(generatePDFHTML(data));
+                  printWindow.document.close();
+                }
+              }}
+              variant="outline"
+              className="h-16 flex flex-col gap-1 border-primary text-primary hover:bg-primary/5"
+            >
+              <FileText className="w-5 h-5" />
+              <span className="text-xs">Visualizar</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -299,7 +315,8 @@ function generatePDFHTML(data: PropostaFormData): string {
     <h3>Consultor</h3>
     <div class="grid">
       <div><div class="label">Nome</div><div class="value">${data.consultorNome || "N/A"}</div></div>
-      <div><div class="label">ID</div><div class="value">${data.consultorIdCodigo || "N/A"}</div></div>
+      <div><div class="label">Email</div><div class="value">${data.consultorEmail || "N/A"}</div></div>
+      <div><div class="label">Telefone</div><div class="value">${data.consultorTelefone || "N/A"}</div></div>
     </div>
   </div>
 

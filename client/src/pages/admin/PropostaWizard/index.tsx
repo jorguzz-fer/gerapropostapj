@@ -8,6 +8,8 @@ export interface PropostaFormData {
   // Step 1 - Configuração
   consultorId: string;
   consultorNome: string;
+  consultorEmail: string; // New field
+  consultorTelefone: string; // New field
   consultorIdCodigo: string;
   clienteNome: string;
   clienteEmail: string;
@@ -38,7 +40,9 @@ export interface PropostaItemForm {
 const initialData: PropostaFormData = {
   consultorId: "",
   consultorNome: "",
-  consultorIdCodigo: "",
+  consultorEmail: "",
+  consultorTelefone: "",
+  consultorIdCodigo: "", // Legacy
   clienteNome: "",
   clienteEmail: "",
   clienteWhatsapp: "",
@@ -92,13 +96,12 @@ export default function PropostaWizard() {
             return (
               <div key={s.num} className="relative z-10 flex flex-col items-center gap-2">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                    isCompleted
-                      ? "bg-primary text-white"
-                      : isCurrent
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${isCompleted
+                    ? "bg-primary text-white"
+                    : isCurrent
                       ? "bg-primary text-white ring-4 ring-orange-100"
                       : "bg-white border-2 border-slate-300 text-slate-400"
-                  }`}
+                    }`}
                 >
                   {isCompleted ? <Check className="w-5 h-5" /> : s.num}
                 </div>

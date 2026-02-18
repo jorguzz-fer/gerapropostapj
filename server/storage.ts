@@ -60,9 +60,13 @@ export interface DashboardMetrics {
   propostasPorEstado: { estado: string; count: number; aceitas: number }[];
   propostasPorMes: { mes: string; enviadas: number; aceitas: number }[];
   propostasPorStatus: { status: string; count: number }[];
-  topConsultores: { nome: string; aceitas: number; total: number }[];
+  topConsultores: { nome: string; aceitas: number; total: number; taxa: number }[];
   valorAcumuladoPorMes: { mes: string; valor: number }[];
   propostasRecentes: Proposta[];
+  funilConversao: { etapa: string; count: number }[];
+  heatmapDiaSemana: { dia: number; hora: number; count: number }[];
+  propostasPorFaixaValor: { faixa: string; count: number }[];
+  tempoMedioResposta: number; // em horas
 }
 
 export class MemStorage implements IStorage {
@@ -115,9 +119,9 @@ export class MemStorage implements IStorage {
     const consultor: Consultor = {
       id,
       nome: data.nome,
-      idConsultor: data.idConsultor,
+      idConsultor: data.idConsultor ?? null,
       email: data.email ?? null,
-      whatsapp: data.whatsapp ?? null,
+      telefone: data.telefone ?? null,
       ativo: data.ativo ?? true,
       createdAt: now,
       updatedAt: now,
@@ -363,9 +367,13 @@ export class MemStorage implements IStorage {
       propostasPorEstado,
       propostasPorMes,
       propostasPorStatus,
-      topConsultores,
+      topConsultores: topConsultores.map(c => ({ ...c, taxa: c.total > 0 ? (c.aceitas / c.total) * 100 : 0 })),
       valorAcumuladoPorMes,
       propostasRecentes,
+      funilConversao: [],
+      heatmapDiaSemana: [],
+      propostasPorFaixaValor: [],
+      tempoMedioResposta: 0
     };
   }
 }

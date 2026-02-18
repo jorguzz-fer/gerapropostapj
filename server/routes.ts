@@ -7,6 +7,7 @@ import {
   createConsultorSchema,
   createMetaSchema,
 } from "@shared/schema";
+import { sendEmail } from "./services/email";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -100,11 +101,49 @@ export async function registerRoutes(
     // Log envio(s)
     if (metodo === "EMAIL" || metodo === "AMBOS") {
       if (proposta.clienteEmail) {
+        // Construct Email HTML
+        const formatCurrency = (val: string | number) =>
+          new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(val));
+
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <div style="background-color: #0f172a; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="color: #f97316; margin: 0;">Nova Proposta WOW+</h1>
+            </div>
+            <div style="padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+              <p>Olá <strong>${proposta.clienteNome}</strong>,</p>
+              <p>Segue abaixo a proposta solicitada:</p>
+              
+              <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; margin: 24px 0;">
+                <h3 style="margin-top: 0; color: #0f172a;">${proposta.titulo}</h3>
+                <p style="color: #64748b; font-size: 14px;">${proposta.descricao || ""}</p>
+                <div style="border-top: 1px solid #cbd5e1; margin-top: 12px; padding-top: 12px;">
+                  <strong style="color: #0f172a; font-size: 18px;">Valor Total: ${formatCurrency(proposta.valorTotal || 0)}</strong>
+                </div>
+              </div>
+
+              <p>O consultor <strong>${proposta.consultorId ? "responsável" : ""}</strong> entrará em contato em breve.</p>
+              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+              <p style="font-size: 12px; color: #94a3b8; text-align: center;">WOW+ Saúde - Soluções em Benefícios</p>
+            </div>
+          </div>
+        `;
+
+        const emailSent = await sendEmail({
+          to: proposta.clienteEmail,
+          subject: `Proposta WOW+: ${proposta.titulo}`,
+          html: emailHtml,
+          // Consultant Email as CC if available is not directly in proposal object, would need join. 
+          // For now, simple send to client.
+          bcc: ["contato@wowmais.com.br"]
+        });
+
         await storage.createEnvio({
           propostaId: proposta.id,
           metodo: "EMAIL",
           destinatario: proposta.clienteEmail,
-          status: "ENVIADO",
+          status: emailSent ? "ENVIADO" : "FALHOU",
+          errorMessage: emailSent ? null : "Erro ao enviar email via Resend",
         });
       }
     }

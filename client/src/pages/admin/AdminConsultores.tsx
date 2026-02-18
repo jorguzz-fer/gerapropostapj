@@ -26,7 +26,7 @@ export default function AdminConsultores() {
   const [nome, setNome] = useState("");
   const [idConsultor, setIdConsultor] = useState("");
   const [email, setEmail] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
+  const [telefone, setTelefone] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -42,13 +42,13 @@ export default function AdminConsultores() {
   useEffect(() => { load(); }, []);
 
   const resetForm = () => {
-    setNome(""); setIdConsultor(""); setEmail(""); setWhatsapp("");
+    setNome(""); setIdConsultor(""); setEmail(""); setTelefone("");
     setEditingId(null);
   };
 
   const handleSave = async () => {
     try {
-      const payload = { nome, idConsultor, email: email || undefined, whatsapp: whatsapp || undefined };
+      const payload = { nome, idConsultor: idConsultor || undefined, email: email || undefined, telefone: telefone || undefined };
       if (editingId) {
         await propostaService.updateConsultor(editingId, payload);
         toast({ title: "Consultor atualizado!" });
@@ -67,9 +67,9 @@ export default function AdminConsultores() {
   const handleEdit = (c: Consultor) => {
     setEditingId(c.id);
     setNome(c.nome);
-    setIdConsultor(c.idConsultor);
+    setIdConsultor(c.idConsultor || "");
     setEmail(c.email || "");
-    setWhatsapp(c.whatsapp || "");
+    setTelefone(c.telefone || "");
     setDialogOpen(true);
   };
 
@@ -109,7 +109,7 @@ export default function AdminConsultores() {
                   <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" className="h-12 bg-slate-50" />
                 </div>
                 <div>
-                  <Label>ID do Consultor *</Label>
+                  <Label>ID do Consultor (Opcional)</Label>
                   <Input value={idConsultor} onChange={(e) => setIdConsultor(e.target.value)} placeholder="Ex: CONS-001" className="h-12 bg-slate-50" />
                 </div>
                 <div>
@@ -117,10 +117,10 @@ export default function AdminConsultores() {
                   <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" className="h-12 bg-slate-50" />
                 </div>
                 <div>
-                  <Label>WhatsApp</Label>
-                  <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(11) 99999-9999" className="h-12 bg-slate-50" />
+                  <Label>Telefone / WhatsApp</Label>
+                  <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="h-12 bg-slate-50" />
                 </div>
-                <Button onClick={handleSave} disabled={!nome || !idConsultor} className="w-full h-12 bg-primary hover:bg-primary/90">
+                <Button onClick={handleSave} disabled={!nome || !email} className="w-full h-12 bg-primary hover:bg-primary/90">
                   {editingId ? "Atualizar" : "Cadastrar"}
                 </Button>
               </div>

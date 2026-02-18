@@ -8,6 +8,13 @@
       "when": 1771366250299,
       "tag": "0000_even_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771422245073,
+      "tag": "0001_lonely_calypso",
+      "breakpoints": true
     }
   ]
 }
