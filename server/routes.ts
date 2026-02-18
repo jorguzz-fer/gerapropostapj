@@ -75,8 +75,13 @@ export async function registerRoutes(
       console.error("Erro validacao proposta:", JSON.stringify(parsed.error.format(), null, 2));
       return res.status(400).json({ message: parsed.error.errors[0].message });
     }
-    const proposta = await storage.createProposta(parsed.data as any);
-    res.status(201).json(proposta);
+    try {
+      const proposta = await storage.createProposta(parsed.data as any);
+      res.status(201).json(proposta);
+    } catch (error: any) {
+      console.error("Erro ao criar proposta:", error);
+      res.status(500).json({ message: error.message || "Erro interno ao criar proposta" });
+    }
   });
 
   app.put("/api/propostas/:id", async (req, res) => {

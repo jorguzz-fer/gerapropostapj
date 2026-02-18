@@ -44,7 +44,7 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
     const consultor = consultores[0];
     const mock = {
       // Consultor (use first available or default)
-      consultorId: consultor?.id || "mock-id",
+      consultorId: consultor?.id || "",
       consultorNome: consultor?.nome || "Consultor Teste",
       consultorEmail: consultor?.email || "consultor@teste.com",
       consultorTelefone: consultor?.telefone || "11999999999",
