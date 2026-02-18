@@ -96,7 +96,7 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
                 <SelectContent>
                   {consultores.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.nome} ({c.idConsultor})
+                      {c.nome} — {c.email}
                     </SelectItem>
                   ))}
                 </SelectContent>

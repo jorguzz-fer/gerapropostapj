@@ -29,9 +29,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar - desktop */}
       <aside className="hidden lg:flex lg:flex-col w-64 bg-slate-900 text-white min-h-screen">
         <div className="p-6 border-b border-slate-800">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-sm">W+</div>
-            <span className="font-bold text-lg">WOW+ Admin</span>
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/logo.png" alt="WOW+" className="h-10 w-auto" />
+            <span className="font-bold text-lg">Admin</span>
           </Link>
         </div>
         <nav className="flex-1 p-4 space-y-1">
@@ -41,11 +41,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             return (
               <Link key={item.href} href={item.href}>
                 <div
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${isActive
                       ? "bg-primary text-white"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="text-sm font-medium">{item.label}</span>
@@ -70,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-64 bg-slate-900 text-white min-h-screen">
             <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-              <span className="font-bold text-lg">WOW+ Admin</span>
+              <img src="/logo.png" alt="WOW+" className="h-8 w-auto" />
               <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="text-white">
                 <X className="w-5 h-5" />
               </Button>
@@ -80,11 +79,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link key={item.href} href={item.href}>
                   <div
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
-                      location === item.href
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${location === item.href
                         ? "bg-primary text-white"
                         : "text-slate-400 hover:text-white hover:bg-slate-800"
-                    }`}
+                      }`}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="text-sm font-medium">{item.label}</span>
@@ -103,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </Button>
-          <span className="font-bold text-slate-900">WOW+ Admin</span>
+          <img src="/logo.png" alt="WOW+" className="h-8 w-auto" />
         </header>
 
         {/* Page content */}

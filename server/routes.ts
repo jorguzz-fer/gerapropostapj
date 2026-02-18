@@ -116,6 +116,13 @@ export async function registerRoutes(
     // Log envio(s)
     if (metodo === "EMAIL" || metodo === "AMBOS") {
       if (proposta.clienteEmail) {
+        // Lookup consultant to get their email
+        let consultorEmail: string | null = null;
+        if (proposta.consultorId) {
+          const consultor = await storage.getConsultor(proposta.consultorId);
+          consultorEmail = consultor?.email || null;
+        }
+
         // Construct Email HTML
         const formatCurrency = (val: string | number) =>
           new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(val));
@@ -137,20 +144,26 @@ export async function registerRoutes(
                 </div>
               </div>
 
-              <p>O consultor <strong>${proposta.consultorId ? "responsável" : ""}</strong> entrará em contato em breve.</p>
+              <p>O consultor responsável entrará em contato em breve.</p>
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center;">WOW+ Saúde - Soluções em Benefícios</p>
             </div>
           </div>
         `;
 
+        // Send TO consultant (if available), CC client + contato@wowmais.com.br
+        const toAddress = consultorEmail || proposta.clienteEmail;
+        const ccAddresses: string[] = [];
+        if (consultorEmail && proposta.clienteEmail) {
+          ccAddresses.push(proposta.clienteEmail);
+        }
+        ccAddresses.push("contato@wowmais.com.br");
+
         const emailSent = await sendEmail({
-          to: proposta.clienteEmail,
+          to: toAddress,
           subject: `Proposta WOW+: ${proposta.titulo}`,
           html: emailHtml,
-          // Consultant Email as CC if available is not directly in proposal object, would need join. 
-          // For now, simple send to client.
-          bcc: ["contato@wowmais.com.br"]
+          cc: ccAddresses,
         });
 
         await storage.createEnvio({

@@ -109,10 +109,6 @@ export default function AdminConsultores() {
                   <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" className="h-12 bg-slate-50" />
                 </div>
                 <div>
-                  <Label>ID do Consultor (Opcional)</Label>
-                  <Input value={idConsultor} onChange={(e) => setIdConsultor(e.target.value)} placeholder="Ex: CONS-001" className="h-12 bg-slate-50" />
-                </div>
-                <div>
                   <Label>Email</Label>
                   <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" className="h-12 bg-slate-50" />
                 </div>
@@ -149,9 +145,9 @@ export default function AdminConsultores() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-slate-800">{c.nome}</h3>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">{c.idConsultor}</Badge>
-                          {c.email && <span className="text-xs text-slate-400">{c.email}</span>}
+                        <div className="flex flex-col gap-0.5 mt-1">
+                          <span className="text-xs text-slate-500">{c.email}</span>
+                          {c.telefone && <span className="text-xs text-slate-400">{c.telefone}</span>}
                         </div>
                       </div>
                     </div>
