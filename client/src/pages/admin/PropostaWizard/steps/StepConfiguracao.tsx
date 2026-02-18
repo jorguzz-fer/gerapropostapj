@@ -40,6 +40,38 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
     }
   };
 
+  const fillMockData = () => {
+    const consultor = consultores[0];
+    const mock = {
+      // Consultor (use first available or default)
+      consultorId: consultor?.id || "mock-id",
+      consultorNome: consultor?.nome || "Consultor Teste",
+      consultorEmail: consultor?.email || "consultor@teste.com",
+      consultorTelefone: consultor?.telefone || "11999999999",
+
+      // Cliente
+      clienteNome: "Empresa Teste Ltda",
+      clienteEmpresa: "Empresa Teste",
+      clienteEmail: "cliente@teste.com",
+      clienteWhatsapp: "11988888888",
+      clienteCnpj: "00.000.000/0001-00",
+      clienteEstado: "SP",
+      clienteCidade: "São Paulo",
+
+      // Conteúdo
+      titulo: "Proposta Comercial - Plano Corporativo",
+      descricao: "Proposta referente a consultoria de benefícios.",
+      itens: [
+        { descricao: "Plano Individual PJ", quantidade: 2, valorUnitario: 150, valorTotal: 300 },
+        { descricao: "Odonto individual PJ", quantidade: 1, valorUnitario: 50, valorTotal: 50 }
+      ],
+      validadeDias: 30,
+      observacoes: "Validade sujeita a aprovação.",
+      valorTotal: 350
+    };
+    onChange(mock);
+  };
+
   const isValid =
     data.clienteNome.trim().length > 0;
 
@@ -205,7 +237,15 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={fillMockData}
+          className="h-14 px-6 text-slate-500 border-dashed border-slate-300 hover:border-primary hover:text-primary"
+        >
+          🪄 Preencher Teste
+        </Button>
+
         <Button
           onClick={onNext}
           disabled={!isValid}
