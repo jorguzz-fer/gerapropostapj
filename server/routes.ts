@@ -76,11 +76,18 @@ export async function registerRoutes(
       return res.status(400).json({ message: parsed.error.errors[0].message });
     }
     try {
-      const proposta = await storage.createProposta(parsed.data as any);
+      const payload = { ...parsed.data };
+      if (payload.consultorId === "" || payload.consultorId === "mock-id") {
+        payload.consultorId = undefined;
+      }
+      const proposta = await storage.createProposta(payload as any);
       res.status(201).json(proposta);
     } catch (error: any) {
       console.error("Erro ao criar proposta:", error);
-      res.status(500).json({ message: error.message || "Erro interno ao criar proposta" });
+      // Expose detailed error for debugging purposes in production
+      const detailedError = error instanceof Error ? error.message : JSON.stringify(error);
+      const postgresError = error.detail ? ` - Detail: ${error.detail}` : "";
+      res.status(500).json({ message: `Erro backend: ${detailedError}${postgresError}` });
     }
   });
 
