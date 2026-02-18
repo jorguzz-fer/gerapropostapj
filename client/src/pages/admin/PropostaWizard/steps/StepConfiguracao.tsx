@@ -238,13 +238,16 @@ export default function StepConfiguracao({ data, onChange, onNext }: Props) {
       </Card>
 
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={fillMockData}
-          className="h-14 px-6 text-slate-500 border-dashed border-slate-300 hover:border-primary hover:text-primary"
-        >
-          🪄 Preencher Teste
-        </Button>
+        {import.meta.env.DEV && (
+          <Button
+            variant="outline"
+            onClick={fillMockData}
+            className="h-14 px-6 text-slate-500 border-dashed border-slate-300 hover:border-primary hover:text-primary"
+          >
+            🪄 Preencher Teste
+          </Button>
+        )}
+        {!import.meta.env.DEV && <div />}
 
         <Button
           onClick={onNext}

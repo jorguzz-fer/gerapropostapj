@@ -188,6 +188,24 @@ export const createMetaSchema = z.object({
   consultorId: z.string().optional(),
 });
 
+// Dashboard metrics — interface compartilhada entre server e client
+export interface DashboardMetrics {
+  totalEnviadas: number;
+  totalAceitas: number;
+  valorTotalAceito: number;
+  taxaConversao: number;
+  propostasPorEstado: { estado: string; count: number; aceitas: number }[];
+  propostasPorMes: { mes: string; enviadas: number; aceitas: number }[];
+  propostasPorStatus: { status: string; count: number }[];
+  topConsultores: { nome: string; aceitas: number; total: number; taxa: number }[];
+  valorAcumuladoPorMes: { mes: string; valor: number }[];
+  propostasRecentes: Proposta[];
+  funilConversao: { etapa: string; count: number }[];
+  heatmapDiaSemana: { dia: number; hora: number; count: number }[];
+  propostasPorFaixaValor: { faixa: string; count: number }[];
+  tempoMedioResposta: number;
+}
+
 // Inferred types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;

@@ -9,6 +9,17 @@ import {
 } from "@shared/schema";
 import { sendEmail } from "./services/email";
 
+// Evita XSS ao inserir dados de usuário em HTML gerado
+function escapeHtml(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -35,7 +46,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/consultores/:id", async (req, res) => {
-    const updated = await storage.updateConsultor(req.params.id, req.body);
+    const parsed = createConsultorSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
+    const updated = await storage.updateConsultor(req.params.id, parsed.data as any);
     if (!updated) return res.status(404).json({ message: "Consultor não encontrado" });
     res.json(updated);
   });
@@ -84,15 +97,17 @@ export async function registerRoutes(
       res.status(201).json(proposta);
     } catch (error: any) {
       console.error("Erro ao criar proposta:", error);
-      // Expose detailed error for debugging purposes in production
       const detailedError = error instanceof Error ? error.message : JSON.stringify(error);
       const postgresError = error.detail ? ` - Detail: ${error.detail}` : "";
       res.status(500).json({ message: `Erro backend: ${detailedError}${postgresError}` });
     }
   });
 
+  // Validação no PUT: aceita apenas campos editáveis da proposta
   app.put("/api/propostas/:id", async (req, res) => {
-    const updated = await storage.updateProposta(req.params.id, req.body);
+    const parsed = createPropostaSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
+    const updated = await storage.updateProposta(req.params.id, parsed.data as any);
     if (!updated) return res.status(404).json({ message: "Proposta não encontrada" });
     res.json(updated);
   });
@@ -113,32 +128,30 @@ export async function registerRoutes(
 
     const { metodo } = parsed.data;
 
-    // Log envio(s)
     if (metodo === "EMAIL" || metodo === "AMBOS") {
       if (proposta.clienteEmail) {
-        // Lookup consultant to get their email
         let consultorEmail: string | null = null;
         if (proposta.consultorId) {
           const consultor = await storage.getConsultor(proposta.consultorId);
           consultorEmail = consultor?.email || null;
         }
 
-        // Construct Email HTML
         const formatCurrency = (val: string | number) =>
           new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(val));
 
+        // Dados escapados para evitar XSS no email
         const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
             <div style="background-color: #0f172a; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
               <h1 style="color: #f97316; margin: 0;">Nova Proposta WOW+</h1>
             </div>
             <div style="padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
-              <p>Olá <strong>${proposta.clienteNome}</strong>,</p>
+              <p>Olá <strong>${escapeHtml(proposta.clienteNome)}</strong>,</p>
               <p>Segue abaixo a proposta solicitada:</p>
-              
+
               <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; margin: 24px 0;">
-                <h3 style="margin-top: 0; color: #0f172a;">${proposta.titulo}</h3>
-                <p style="color: #64748b; font-size: 14px;">${proposta.descricao || ""}</p>
+                <h3 style="margin-top: 0; color: #0f172a;">${escapeHtml(proposta.titulo)}</h3>
+                <p style="color: #64748b; font-size: 14px;">${escapeHtml(proposta.descricao)}</p>
                 <div style="border-top: 1px solid #cbd5e1; margin-top: 12px; padding-top: 12px;">
                   <strong style="color: #0f172a; font-size: 18px;">Valor Total: ${formatCurrency(proposta.valorTotal || 0)}</strong>
                 </div>
@@ -151,7 +164,6 @@ export async function registerRoutes(
           </div>
         `;
 
-        // Send TO consultant (if available), CC client + contato@wowmais.com.br
         const toAddress = consultorEmail || proposta.clienteEmail;
         const ccAddresses: string[] = [];
         if (consultorEmail && proposta.clienteEmail) {
@@ -161,7 +173,7 @@ export async function registerRoutes(
 
         const emailSent = await sendEmail({
           to: toAddress,
-          subject: `Proposta WOW+: ${proposta.titulo}`,
+          subject: `Proposta WOW+: ${escapeHtml(proposta.titulo)}`,
           html: emailHtml,
           cc: ccAddresses,
         });
@@ -175,18 +187,19 @@ export async function registerRoutes(
         });
       }
     }
+
     if (metodo === "WHATSAPP" || metodo === "AMBOS") {
       if (proposta.clienteWhatsapp) {
+        // WhatsApp: registra o envio como PENDENTE — integração real deve ser implementada
         await storage.createEnvio({
           propostaId: proposta.id,
           metodo: "WHATSAPP",
           destinatario: proposta.clienteWhatsapp,
-          status: "ENVIADO",
+          status: "PENDENTE",
         });
       }
     }
 
-    // Update proposta status
     const updated = await storage.updateProposta(proposta.id, {
       status: "ENVIADA",
       metodoEnvio: metodo,
@@ -224,7 +237,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/metas/:id", async (req, res) => {
-    const updated = await storage.updateMeta(req.params.id, req.body);
+    const parsed = createMetaSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
+    const updated = await storage.updateMeta(req.params.id, parsed.data as any);
     if (!updated) return res.status(404).json({ message: "Meta não encontrada" });
     res.json(updated);
   });

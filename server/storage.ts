@@ -5,6 +5,7 @@ import {
   type PropostaEnvio, type InsertPropostaEnvio,
   type MetaProposta, type InsertMetaProposta,
   type PropostaItem,
+  type DashboardMetrics,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -52,22 +53,7 @@ export interface PropostaFilters {
   dataFim?: string;
 }
 
-export interface DashboardMetrics {
-  totalEnviadas: number;
-  totalAceitas: number;
-  valorTotalAceito: number;
-  taxaConversao: number;
-  propostasPorEstado: { estado: string; count: number; aceitas: number }[];
-  propostasPorMes: { mes: string; enviadas: number; aceitas: number }[];
-  propostasPorStatus: { status: string; count: number }[];
-  topConsultores: { nome: string; aceitas: number; total: number; taxa: number }[];
-  valorAcumuladoPorMes: { mes: string; valor: number }[];
-  propostasRecentes: Proposta[];
-  funilConversao: { etapa: string; count: number }[];
-  heatmapDiaSemana: { dia: number; hora: number; count: number }[];
-  propostasPorFaixaValor: { faixa: string; count: number }[];
-  tempoMedioResposta: number; // em horas
-}
+// DashboardMetrics movida para @shared/schema — importada acima
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;

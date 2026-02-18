@@ -76,22 +76,39 @@ export class PostgresStorage implements IStorage {
     }
 
     async getNextNumeroProposta(): Promise<string> {
+        // Mantido para compatibilidade com IStorage, mas createProposta usa transação
         const year = new Date().getFullYear();
-        // Simplified counter logic for now - in production ideally use a sequence or count
-        const countResult = await db.select({ count: sql<number>`count(*)` }).from(propostas);
-        const count = Number(countResult[0]?.count || 0) + 1;
-        return `PRP-${year}-${String(count).padStart(4, "0")}`;
+        const yearPrefix = `PRP-${year}-`;
+        const [seqResult] = await db
+            .select({ maxSeq: sql<number>`COALESCE(MAX(SPLIT_PART(numero_proposta, '-', 3)::INTEGER), 0)` })
+            .from(propostas)
+            .where(sql`numero_proposta LIKE ${yearPrefix + "%"}`);
+        const nextSeq = (Number(seqResult?.maxSeq) || 0) + 1;
+        return `${yearPrefix}${String(nextSeq).padStart(4, "0")}`;
     }
 
     async createProposta(data: InsertProposta): Promise<Proposta> {
-        const numeroProposta = await this.getNextNumeroProposta();
-        const [newProposta] = await db.insert(propostas).values({
-            ...data,
-            numeroProposta,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }).returning();
-        return newProposta;
+        // Transação garante que SELECT e INSERT são atômicos, eliminando race condition
+        return await db.transaction(async (tx) => {
+            const year = new Date().getFullYear();
+            const yearPrefix = `PRP-${year}-`;
+
+            const [seqResult] = await tx
+                .select({ maxSeq: sql<number>`COALESCE(MAX(SPLIT_PART(numero_proposta, '-', 3)::INTEGER), 0)` })
+                .from(propostas)
+                .where(sql`numero_proposta LIKE ${yearPrefix + "%"}`);
+
+            const nextSeq = (Number(seqResult?.maxSeq) || 0) + 1;
+            const numeroProposta = `${yearPrefix}${String(nextSeq).padStart(4, "0")}`;
+
+            const [newProposta] = await tx.insert(propostas).values({
+                ...data,
+                numeroProposta,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }).returning();
+            return newProposta;
+        });
     }
 
     async updateProposta(id: string, data: Partial<InsertProposta>): Promise<Proposta | undefined> {

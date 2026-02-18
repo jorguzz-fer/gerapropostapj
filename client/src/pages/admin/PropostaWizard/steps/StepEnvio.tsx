@@ -284,12 +284,22 @@ export default function StepEnvio({ data, propostaId, setPropostaId, onBack }: P
   );
 }
 
+function escapeHtml(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function generatePDFHTML(data: PropostaFormData): string {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
   return `<!DOCTYPE html>
-<html><head><title>Proposta - ${data.titulo}</title>
+<html><head><title>Proposta - ${escapeHtml(data.titulo)}</title>
 <style>
   body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1e293b; }
   .header { background: #0f172a; color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; }
@@ -310,28 +320,28 @@ function generatePDFHTML(data: PropostaFormData): string {
 </style></head>
 <body>
   <div class="header">
-    <h1>${data.titulo}</h1>
-    <p>${data.descricao || ""}</p>
+    <h1>${escapeHtml(data.titulo)}</h1>
+    <p>${escapeHtml(data.descricao)}</p>
   </div>
 
   <div class="section">
     <h3>Consultor</h3>
     <div class="grid">
-      <div><div class="label">Nome</div><div class="value">${data.consultorNome || "N/A"}</div></div>
-      <div><div class="label">Email</div><div class="value">${data.consultorEmail || "N/A"}</div></div>
-      <div><div class="label">Telefone</div><div class="value">${data.consultorTelefone || "N/A"}</div></div>
+      <div><div class="label">Nome</div><div class="value">${escapeHtml(data.consultorNome) || "N/A"}</div></div>
+      <div><div class="label">Email</div><div class="value">${escapeHtml(data.consultorEmail) || "N/A"}</div></div>
+      <div><div class="label">Telefone</div><div class="value">${escapeHtml(data.consultorTelefone) || "N/A"}</div></div>
     </div>
   </div>
 
   <div class="section">
     <h3>Cliente</h3>
     <div class="grid">
-      <div><div class="label">Nome</div><div class="value">${data.clienteNome}</div></div>
-      <div><div class="label">Empresa</div><div class="value">${data.clienteEmpresa || "N/A"}</div></div>
-      <div><div class="label">Email</div><div class="value">${data.clienteEmail || "N/A"}</div></div>
-      <div><div class="label">WhatsApp</div><div class="value">${data.clienteWhatsapp || "N/A"}</div></div>
-      <div><div class="label">CNPJ</div><div class="value">${data.clienteCnpj || "N/A"}</div></div>
-      <div><div class="label">Localização</div><div class="value">${data.clienteCidade || ""} ${data.clienteEstado ? "- " + data.clienteEstado : ""}</div></div>
+      <div><div class="label">Nome</div><div class="value">${escapeHtml(data.clienteNome)}</div></div>
+      <div><div class="label">Empresa</div><div class="value">${escapeHtml(data.clienteEmpresa) || "N/A"}</div></div>
+      <div><div class="label">Email</div><div class="value">${escapeHtml(data.clienteEmail) || "N/A"}</div></div>
+      <div><div class="label">WhatsApp</div><div class="value">${escapeHtml(data.clienteWhatsapp) || "N/A"}</div></div>
+      <div><div class="label">CNPJ</div><div class="value">${escapeHtml(data.clienteCnpj) || "N/A"}</div></div>
+      <div><div class="label">Localização</div><div class="value">${escapeHtml(data.clienteCidade)} ${data.clienteEstado ? "- " + escapeHtml(data.clienteEstado) : ""}</div></div>
     </div>
   </div>
 
@@ -340,7 +350,7 @@ function generatePDFHTML(data: PropostaFormData): string {
     <table>
       <thead><tr><th>Descrição</th><th style="text-align:center">Qtd</th><th style="text-align:right">Valor Unit.</th><th style="text-align:right">Total</th></tr></thead>
       <tbody>
-        ${data.itens.map((item) => `<tr><td>${item.descricao}</td><td style="text-align:center">${item.quantidade}</td><td style="text-align:right">${formatCurrency(item.valorUnitario)}</td><td style="text-align:right">${formatCurrency(item.valorTotal)}</td></tr>`).join("")}
+        ${data.itens.map((item) => `<tr><td>${escapeHtml(item.descricao)}</td><td style="text-align:center">${item.quantidade}</td><td style="text-align:right">${formatCurrency(item.valorUnitario)}</td><td style="text-align:right">${formatCurrency(item.valorTotal)}</td></tr>`).join("")}
       </tbody>
       <tfoot>
         <tr class="total-row"><td colspan="3" style="text-align:right">TOTAL</td><td style="text-align:right" class="total-value">${formatCurrency(data.valorTotal)}</td></tr>
@@ -350,11 +360,11 @@ function generatePDFHTML(data: PropostaFormData): string {
 
   <div class="section">
     <p><strong>Validade:</strong> ${data.validadeDias} dias</p>
-    ${data.observacoes ? `<p><strong>Observações:</strong> ${data.observacoes}</p>` : ""}
+    ${data.observacoes ? `<p><strong>Observações:</strong> ${escapeHtml(data.observacoes)}</p>` : ""}
   </div>
 
   <div class="footer">
-    <p>Proposta gerada em ${new Date().toLocaleDateString("pt-BR")} | WOW+ Saude</p>
+    <p>Proposta gerada em ${new Date().toLocaleDateString("pt-BR")} | WOW+ Saúde</p>
   </div>
 </body></html>`;
 }

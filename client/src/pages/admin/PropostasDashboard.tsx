@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import logo from "@/assets/logo.png";
+import { STATUS_COLORS_HEX } from "@/lib/propostaConstants";
 import {
   Send,
   CheckCircle,
@@ -37,32 +39,9 @@ import {
   ZAxis
 } from "recharts";
 import { propostaService } from "@/lib/propostaService";
+import type { DashboardMetrics } from "@shared/schema";
 
-interface DashboardMetrics {
-  totalEnviadas: number;
-  totalAceitas: number;
-  valorTotalAceito: number;
-  taxaConversao: number;
-  propostasPorEstado: { estado: string; count: number; aceitas: number }[];
-  propostasPorMes: { mes: string; enviadas: number; aceitas: number }[];
-  propostasPorStatus: { status: string; count: number }[];
-  topConsultores: { nome: string; aceitas: number; total: number; taxa: number }[];
-  valorAcumuladoPorMes: { mes: string; valor: number }[];
-  propostasRecentes: any[];
-  funilConversao: { etapa: string; count: number }[];
-  heatmapDiaSemana: { dia: number; hora: number; count: number }[];
-  propostasPorFaixaValor: { faixa: string; count: number }[];
-  tempoMedioResposta: number;
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  RASCUNHO: "#94a3b8",
-  ENVIADA: "#3b82f6",
-  VISUALIZADA: "#eab308",
-  ACEITA: "#22c55e",
-  RECUSADA: "#ef4444",
-  EXPIRADA: "#6b7280",
-};
+// STATUS_COLORS_HEX importado de @/lib/propostaConstants
 
 const CHART_COLORS = ["#f97316", "#0f172a", "#3b82f6", "#22c55e", "#eab308", "#ef4444"];
 
@@ -113,7 +92,7 @@ export default function PropostasDashboard() {
               Propostas
             </Button>
             <div className="flex items-center gap-4">
-              <img src="/src/assets/logo.png" alt="WOW+ Logo" className="h-12 w-auto" />
+              <img src={logo} alt="WOW+ Logo" className="h-12 w-auto" />
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">Dashboard de Propostas</h1>
                 <p className="text-slate-500">Visão geral do desempenho comercial.</p>
@@ -280,7 +259,7 @@ export default function PropostasDashboard() {
                       paddingAngle={5}
                     >
                       {metrics.propostasPorStatus.map((entry, i) => (
-                        <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
+                        <Cell key={i} fill={STATUS_COLORS_HEX[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
