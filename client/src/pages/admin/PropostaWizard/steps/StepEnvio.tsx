@@ -49,7 +49,7 @@ export default function StepEnvio({ data, propostaId, setPropostaId, onBack }: P
       clienteCidade: data.clienteCidade || undefined,
       titulo: data.titulo,
       descricao: data.descricao || undefined,
-      itens: data.itens,
+      itens: data.itens.filter(i => i.descricao.trim().length > 0),
       valorTotal: data.valorTotal.toFixed(2),
       validadeDias: data.validadeDias,
       observacoes: data.observacoes || undefined,
@@ -66,8 +66,10 @@ export default function StepEnvio({ data, propostaId, setPropostaId, onBack }: P
     try {
       await saveProposta();
       toast({ title: "Rascunho salvo!", description: "Proposta salva como rascunho." });
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível salvar.", variant: "destructive" });
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.message || "Não foi possível salvar.";
+      toast({ title: "Erro", description: msg, variant: "destructive" });
     }
     setLoading(false);
   };
@@ -79,8 +81,9 @@ export default function StepEnvio({ data, propostaId, setPropostaId, onBack }: P
       await propostaService.enviar(id, metodo);
       setEnviada(true);
       toast({ title: "Proposta enviada!", description: `Enviada via ${metodo.toLowerCase()}.` });
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível enviar.", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error.message || "Não foi possível enviar.";
+      toast({ title: "Erro", description: msg, variant: "destructive" });
     }
     setLoading(false);
   };

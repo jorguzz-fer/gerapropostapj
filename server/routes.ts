@@ -71,7 +71,10 @@ export async function registerRoutes(
 
   app.post("/api/propostas", async (req, res) => {
     const parsed = createPropostaSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0].message });
+    if (!parsed.success) {
+      console.error("Erro validacao proposta:", JSON.stringify(parsed.error.format(), null, 2));
+      return res.status(400).json({ message: parsed.error.errors[0].message });
+    }
     const proposta = await storage.createProposta(parsed.data as any);
     res.status(201).json(proposta);
   });
